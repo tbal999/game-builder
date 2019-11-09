@@ -37,6 +37,7 @@ Play:<br/>
 When you press play, you will be able to control the hero character and navigate the world.<br/>
 
 TODO:<br/>
+Error handling...<br/>
 Implement save functionality.<br/>
 implement load functionality.<br/>
 
