@@ -8,17 +8,41 @@ import (
 )
 
 type objectStorage struct {
-	objectID          []int
-	objectname        []string
-	objectdescription []string
-	objecthealth      []int
-	objectattack      []int
+	objectID          []int    `json:"objectID"`
+	objectname        []string `json:"objectname"`
+	objectdescription []string `json:"objectdescription"`
+	objecthealth      []int    `json:"objecthealth"`
+	objectattack      []int    `json:"objectattack"`
 }
 
 type worldMap struct {
-	description []string
-	zone        [][][]int
-	livezone    [][][]int
+	description []string  `json:"worldMapdescription"`
+	zone        [][][]int `json:"worldMapzone"`
+	livezone    [][][]int `json:"worldMaplivezone"`
+}
+
+func (w *worldMap) interaction(z, y, x int, o *objectStorage) {
+	world_map := *w
+	object_storage := *o
+	hero_name, hero_description, hero_health, hero_attack := object_storage.grabObject(1)
+	fmt.Println(hero_name, hero_description, hero_health, hero_attack)
+	object_name, object_description, object_health, object_attack := object_storage.grabObject(world_map.livezone[z][y][x])
+	fmt.Println(object_name, object_description, object_health, object_attack)
+}
+
+func (x *objectStorage) grabObject(index int) (string, string, int, int) {
+	object_storage := *x
+	for i := range object_storage.objectname {
+		if i+1 == index {
+			return object_storage.objectname[i], object_storage.objectdescription[i], object_storage.objecthealth[i], object_storage.objectattack[i]
+		}
+	}
+	return "", "", 0, 0
+}
+
+func savegame(o objectStorage, w worldMap) { //either JSON or CSV export
+	fmt.Println("Not yet implemented")
+
 }
 
 func (world_map *worldMap) buildMap() {
@@ -156,16 +180,6 @@ func (x objectStorage) printObject() {
 	}
 }
 
-func (x *objectStorage) grabObject(index int) (string, string, int, int) {
-	object_storage := *x
-	for i := range object_storage.objectname {
-		if i+1 == index {
-			return object_storage.objectname[i], object_storage.objectdescription[i], object_storage.objecthealth[i], object_storage.objectattack[i]
-		}
-	}
-	return "", "", 0, 0
-}
-
 func (w *worldMap) placeObject(y objectStorage) {
 	fmt.Println("")
 	world_map := *w
@@ -196,8 +210,10 @@ func (w *worldMap) placeObject(y objectStorage) {
 									fmt.Println(world_map.zone[i][i2][i3])
 									fmt.Println(objectindex)
 									fmt.Println(y.objectname)
-									world_map.zone[i][i2][i3] = objectindex + 1
-									if objectindex+1 != 1 {
+									if objectindex == 0 {
+										world_map.zone[i][i2][i3] = objectindex + 1
+									}
+									if objectindex != 0 {
 										world_map.livezone[i][i2][i3] = objectindex + 1
 									}
 								}
@@ -210,12 +226,6 @@ func (w *worldMap) placeObject(y objectStorage) {
 
 	}
 	*w = world_map
-}
-
-func (w *worldMap) interaction(z, y, x int, o *objectStorage) {
-	world_map := *w
-	object_storage := *o
-	fmt.Println(object_storage.grabObject(world_map.livezone[z][y][x]))
 }
 
 func (w *worldMap) moveHero(cmd string, o *objectStorage) {
@@ -362,7 +372,7 @@ func main() {
 				}
 			}
 		case "save":
-			fmt.Println("coming soon!")
+			savegame(object, gamemap)
 		case "q":
 			gameover = 1
 		}
