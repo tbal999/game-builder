@@ -18,9 +18,11 @@ type objectStorage struct {
 type worldMap struct {
 	description []string
 	zone        [][][]int
+	livezone    [][][]int
 }
 
 func (world_map *worldMap) buildMap() {
+	fmt.Println("")
 	Scanner := bufio.NewScanner(os.Stdin)
 	fmt.Println("Type in name of map:")
 	Scanner.Scan()
@@ -33,58 +35,88 @@ func (world_map *worldMap) buildMap() {
 	Scanner.Scan()
 	xindex1 := Scanner.Text()
 	xindex, _ := strconv.Atoi(xindex1)
+	twice := 0
 	yi := 0
-	slice := [][]int{}
-	for yi = 0; yi < yindex; yi++ {
-		nest := []int{}
-		xi := 0
-		for xi = 0; xi < xindex; xi++ {
-			nest = append(nest, 0)
+	for twice = 0; twice < 2; twice++ {
+		slice := [][]int{}
+		for yi = 0; yi < yindex; yi++ {
+			nest := []int{}
+			xi := 0
+			for xi = 0; xi < xindex; xi++ {
+				nest = append(nest, 0)
+			}
+			slice = append(slice, nest)
 		}
-		slice = append(slice, nest)
+		world_map.buildMap2(slice, mapname, twice)
 	}
-	world_map.buildMap2(slice, mapname)
 }
 
-func (x *worldMap) buildMap2(slice [][]int, mapname string) {
+func (x *worldMap) buildMap2(slice [][]int, mapname string, twice int) {
 	world_map := *x
-	world_map.zone = append(world_map.zone, slice)
-	world_map.description = append(world_map.description, mapname)
+	switch twice {
+	case 0:
+		world_map.zone = append(world_map.zone, slice)
+		world_map.description = append(world_map.description, mapname)
+	case 1:
+		world_map.livezone = append(world_map.livezone, slice)
+	}
 	*x = world_map
 }
 
 func (x worldMap) printMap() {
+	fmt.Println("")
 	Scanner := bufio.NewScanner(os.Stdin)
 	fmt.Println("Type in map index:")
 	Scanner.Scan()
 	y1 := Scanner.Text()
 	y, _ := strconv.Atoi(y1)
+	fmt.Println("")
 	for i := range x.zone {
 		if i == y {
 			for o := range x.zone[i] {
 				fmt.Println(x.description[i], x.zone[i][o])
+			}
+		}
+	}
+	for i := range x.livezone {
+		if i == y {
+			for o := range x.livezone[i] {
+				fmt.Println(x.description[i], x.livezone[i][o])
 			}
 		}
 	}
 }
 
 func (x worldMap) printZone(y int) {
+	fmt.Println("Your location")
 	for i := range x.zone {
 		if i == y {
 			for o := range x.zone[i] {
-				fmt.Println(x.description[i], x.zone[i][o])
+				fmt.Println(i, x.zone[i][o])
+			}
+		}
+	}
+	fmt.Println("")
+	fmt.Println("Objects")
+	for i := range x.livezone {
+		if i == y {
+			for o := range x.livezone[i] {
+				fmt.Println(i, x.livezone[i][o])
 			}
 		}
 	}
 }
 
 func (x worldMap) fullMap() {
+	fmt.Println("")
+	fmt.Println("Index, Description.")
 	for i := range x.description {
-		fmt.Println(x.description[i])
+		fmt.Println(i, x.description[i])
 	}
 }
 
 func (x *objectStorage) createObject() {
+	fmt.Println("")
 	Scanner := bufio.NewScanner(os.Stdin)
 	fmt.Println("Type in name of object:")
 	Scanner.Scan()
@@ -109,8 +141,9 @@ func (x *objectStorage) createObject() {
 }
 
 func (x objectStorage) printObject() {
+	fmt.Println("")
 	Input := bufio.NewScanner(os.Stdin)
-	fmt.Println("Type in object name:")
+	fmt.Println("Type in name of object you are looking for:")
 	Input.Scan()
 	result2 := Input.Text()
 	for i := range x.objectname {
@@ -123,16 +156,18 @@ func (x objectStorage) printObject() {
 	}
 }
 
-func (x objectStorage) grabObject(name string) (string, string, int, int) {
-	for i := range x.objectname {
-		if x.objectname[i] == name {
-			return x.objectname[i], x.objectdescription[i], x.objecthealth[i], x.objectattack[i]
+func (x *objectStorage) grabObject(index int) (string, string, int, int) {
+	object_storage := *x
+	for i := range object_storage.objectname {
+		if i+1 == index {
+			return object_storage.objectname[i], object_storage.objectdescription[i], object_storage.objecthealth[i], object_storage.objectattack[i]
 		}
 	}
 	return "", "", 0, 0
 }
 
 func (w *worldMap) placeObject(y objectStorage) {
+	fmt.Println("")
 	world_map := *w
 	Input := bufio.NewScanner(os.Stdin)
 	fmt.Println("Type in object name:")
@@ -162,6 +197,9 @@ func (w *worldMap) placeObject(y objectStorage) {
 									fmt.Println(objectindex)
 									fmt.Println(y.objectname)
 									world_map.zone[i][i2][i3] = objectindex + 1
+									if objectindex+1 != 1 {
+										world_map.livezone[i][i2][i3] = objectindex + 1
+									}
 								}
 							}
 						}
@@ -174,13 +212,18 @@ func (w *worldMap) placeObject(y objectStorage) {
 	*w = world_map
 }
 
-func (w *worldMap) moveHero(cmd string) {
+func (w *worldMap) interaction(z, y, x int, o *objectStorage) {
+	world_map := *w
+	object_storage := *o
+	fmt.Println(object_storage.grabObject(world_map.livezone[z][y][x]))
+}
+
+func (w *worldMap) moveHero(cmd string, o *objectStorage) {
 	world_map := *w
 	for i := range world_map.zone {
 		for a := range world_map.zone[i] {
 			for b := range world_map.zone[i][a] {
 				if world_map.zone[i][a][b] == 1 {
-					fmt.Println("Hero spotted!")
 					switch cmd {
 					case "w":
 						if a == 0 {
@@ -189,16 +232,18 @@ func (w *worldMap) moveHero(cmd string) {
 						}
 						if a != 0 {
 							world_map.zone[i][a][b] = 0
-							world_map.zone[i][a-1][b] = 1
+							world_map.zone[i][a-1][b] = 1 // OBJECT INTERACTION
 							world_map.printZone(i)
+							w.interaction(i, a-1, b, o)
 							*w = world_map
 							return
 						}
 					case "s":
 						if a != len(world_map.zone[i])-1 {
 							world_map.zone[i][a][b] = 0
-							world_map.zone[i][a+1][b] = 1
+							world_map.zone[i][a+1][b] = 1 // OBJECT INTERACTION
 							world_map.printZone(i)
+							w.interaction(i, a+1, b, o)
 							*w = world_map
 							return
 						}
@@ -213,14 +258,16 @@ func (w *worldMap) moveHero(cmd string) {
 								return
 							}
 							world_map.zone[i][a][b] = 0
-							world_map.zone[i-1][len(world_map.zone[i-1])-1][len(world_map.zone[i-1][0])-1] = 1
+							world_map.zone[i-1][len(world_map.zone[i-1])-1][len(world_map.zone[i-1][0])-1] = 1 // OBJECT INTERACTION
 							world_map.printZone(i - 1)
+							w.interaction(i-1, len(world_map.zone[i-1])-1, len(world_map.zone[i-1][0])-1, o)
 							*w = world_map
 							return
 						}
 						if b != 0 {
 							world_map.zone[i][a][b] = 0
-							world_map.zone[i][a][b-1] = 1
+							world_map.zone[i][a][b-1] = 1 // OBJECT INTERACTION
+							w.interaction(i, a, b-1, o)
 							world_map.printZone(i)
 							*w = world_map
 							return
@@ -232,15 +279,17 @@ func (w *worldMap) moveHero(cmd string) {
 								return
 							}
 							world_map.zone[i][a][b] = 0
-							world_map.zone[i+1][len(world_map.zone[i+1])-1][0] = 1
+							world_map.zone[i+1][len(world_map.zone[i+1])-1][0] = 1 // OBJECT INTERACTION
 							world_map.printZone(i + 1)
+							w.interaction(i+1, len(world_map.zone[i+1])-1, 0, o)
 							*w = world_map
 							return
 						}
 						if b != len(world_map.zone[i][a])-1 {
 							world_map.zone[i][a][b] = 0
-							world_map.zone[i][a][b+1] = 1
+							world_map.zone[i][a][b+1] = 1 // OBJECT INTERACTION
 							world_map.printZone(i)
+							w.interaction(i, a, b+1, o)
 							*w = world_map
 							return
 						}
@@ -270,12 +319,12 @@ func main() {
 		result := Input.Text()
 		switch result {
 		case "help":
-			fmt.Println("buildobject: create an object (name, description, attack, health)")
+			fmt.Println("buildobject: create an object. FIRST OBJECT YOU CREATE IS HERO.")
 			fmt.Println("viewobject: allows you to view object (type in name)")
 			fmt.Println("placeobject: place object on the map (type in co-ordinates)")
 			fmt.Println("buildmap: allows you to create an X by X map by an index")
-			fmt.Println("fullmap: prints out all maps by index.")
-			fmt.Println("printmap: prints out map by index. First map would be 0, second 1 etc.")
+			fmt.Println("viewworld: prints out all maps by index.")
+			fmt.Println("viewmap: prints out map by index. First map would be 0, second 1 etc.")
 			fmt.Println("play: initiates the game")
 			fmt.Println("q: exit the game\n")
 		case "buildobject":
@@ -286,34 +335,34 @@ func main() {
 			gamemap.placeObject(object)
 		case "buildmap":
 			gamemap.buildMap()
-		case "printmap":
+		case "viewmap":
 			gamemap.printMap()
-		case "fullmap":
+		case "viewworld":
 			gamemap.fullMap()
 		case "play":
-			fmt.Println("Playing Game!")
+			fmt.Println("Loading instance...")
 			fmt.Println("w s a d to move around. q to quit game")
 			playgame := 0
 			for playgame == 0 {
-				fmt.Println("Input here:")
+				fmt.Println("Input here (w,s,a,d):")
 				Input.Scan()
-				result2 := Input.Text()
-				switch result2 {
+				command := Input.Text()
+				switch command {
 				case "q":
-					fmt.Println("Quitting game...")
+					fmt.Println("Quitting instance...")
 					playgame = 1
 				case "w":
-					gamemap.moveHero(result2)
+					gamemap.moveHero(command, &object)
 				case "s":
-					gamemap.moveHero(result2)
+					gamemap.moveHero(command, &object)
 				case "a":
-					gamemap.moveHero(result2)
+					gamemap.moveHero(command, &object)
 				case "d":
-					gamemap.moveHero(result2)
+					gamemap.moveHero(command, &object)
 				}
 			}
 		case "save":
-
+			fmt.Println("coming soon!")
 		case "q":
 			gameover = 1
 		}
