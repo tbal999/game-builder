@@ -1,5 +1,5 @@
 # game-builder
-a simple command line for building dungeon crawler games (under construction)
+a simple command line for building dungeon crawler games (under construction!!!)
 
 Commands:<br/>
 buildobject: create an object.<br/>
