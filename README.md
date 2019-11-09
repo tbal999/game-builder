@@ -1,7 +1,7 @@
 # game-builder
 a simple command line for building dungeon crawler games (under construction!!!)
 
-Commands:<br/>
+<b>Commands:</b><br/>
 buildobject: create an object.<br/>
 allobject: view all objects by name and index<br/>
 viewobject: allows you to view object (type in name)<br/>
