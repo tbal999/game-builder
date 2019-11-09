@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"math/rand"
 	"os"
 	"strconv"
 )
@@ -24,10 +25,77 @@ type worldMap struct {
 func (w *worldMap) interaction(z, y, x int, o *objectStorage) {
 	world_map := *w
 	object_storage := *o
-	hero_name, hero_description, hero_health, hero_attack := object_storage.grabObject(1)
-	fmt.Println(hero_name, hero_description, hero_health, hero_attack)
+	checker := 0
+	_, _, _, hero_attack := object_storage.grabObject(1)
 	object_name, object_description, object_health, object_attack := object_storage.grabObject(world_map.livezone[z][y][x])
-	fmt.Println(object_name, object_description, object_health, object_attack)
+	if object_name == "" {
+		return
+	}
+	fmt.Println("You have discovered a " + object_name)
+	fmt.Println(object_description)
+	chance := randomNumber(1, 10)
+	if object_attack == 0 {
+		fmt.Println("It looks harmless")
+	}
+	if object_attack != 0 {
+		fmt.Println("It is aggressive, and looks like it wants a fight")
+		if hero_attack > object_attack {
+			if chance > 6 {
+				fmt.Println("It realises you are quite strong and backs away")
+				return
+			}
+			fmt.Println("It leaps at you!")
+			object_storage.editObject(0, object_attack, 0)
+			fmt.Println("You took " + strconv.Itoa(object_attack) + " damage")
+			fmt.Println("It realises that you are quite strong and runs away!")
+			world_map.livezone[z][y][x] = 0
+			*w = world_map
+			*o = object_storage
+			return
+		}
+		for checker == 0 {
+			fmt.Println("It leaps at you!")
+			object_storage.editObject(0, object_attack, 0)
+			fmt.Println("You took " + strconv.Itoa(object_attack) + " damage")
+			object_health = object_health - hero_attack
+			fmt.Println("The " + object_name + " took " + strconv.Itoa(object_attack) + " damage")
+			if object_health <= 0 {
+				fmt.Println("The " + object_name + " died")
+				world_map.livezone[z][y][x] = 0
+				checker = 1
+			}
+			_, _, hhealth, _ := object_storage.grabObject(1)
+			if hhealth <= 0 {
+				fmt.Println("You died")
+				checker = 1
+			}
+		}
+		*w = world_map
+		*o = object_storage
+		return
+	}
+
+	*w = world_map
+	*o = object_storage
+}
+
+func (x *objectStorage) editObject(index, dmg, attack int) {
+	object_storage := *x
+	for i := range object_storage.objectname {
+		if i == index {
+			object_storage.objecthealth[i] = object_storage.objecthealth[i] - dmg
+			object_storage.objectattack[i] = object_storage.objectattack[i] + attack
+		}
+	}
+	*x = object_storage
+}
+
+func randomNumber(min, max int) int {
+	z := rand.Intn(max)
+	if z < min {
+		z = min
+	}
+	return z
 }
 
 func (x *objectStorage) grabObject(index int) (string, string, int, int) {
@@ -38,6 +106,13 @@ func (x *objectStorage) grabObject(index int) (string, string, int, int) {
 		}
 	}
 	return "", "", 0, 0
+}
+
+func (x *objectStorage) allObject() {
+	object_storage := *x
+	for i := range object_storage.objectname {
+		fmt.Println(i, object_storage.objectname[i])
+	}
 }
 
 func savegame(o objectStorage, w worldMap) { //either JSON or CSV export
@@ -320,16 +395,19 @@ func main() {
 	Input := bufio.NewScanner(os.Stdin)
 	//game running
 	gameover := 0
+	fmt.Println("===GAME BUILDER===")
+	fmt.Println("For help simply type 'help'")
+	fmt.Println("Press 'q' to quit")
+	fmt.Println("The first object you build must be your hero character")
 	for gameover == 0 {
 		fmt.Println("===GAME BUILDER===")
-		fmt.Println("For help/commands simply enter 'help'")
-		fmt.Println("q to quit")
 		fmt.Println("Input here:")
 		Input.Scan()
 		result := Input.Text()
 		switch result {
 		case "help":
 			fmt.Println("buildobject: create an object. FIRST OBJECT YOU CREATE IS HERO.")
+			fmt.Println("allobject: view all objects by name and index")
 			fmt.Println("viewobject: allows you to view object (type in name)")
 			fmt.Println("placeobject: place object on the map (type in co-ordinates)")
 			fmt.Println("buildmap: allows you to create an X by X map by an index")
@@ -339,6 +417,8 @@ func main() {
 			fmt.Println("q: exit the game\n")
 		case "buildobject":
 			object.createObject()
+		case "allobject":
+			object.allObject()
 		case "viewobject":
 			object.printObject()
 		case "placeobject":
@@ -350,11 +430,22 @@ func main() {
 		case "viewworld":
 			gamemap.fullMap()
 		case "play":
-			fmt.Println("Loading instance...")
-			fmt.Println("w s a d to move around. q to quit game")
 			playgame := 0
+			if len(gamemap.zone) == 0 {
+				fmt.Println("No maps! Quitting instance...")
+				playgame = 1
+				break
+			}
+			gamemap.printZone(0)
+			fmt.Println("Loading instance...")
+			fmt.Println("w s a d to move around. p for hero stats. q to quit game")
 			for playgame == 0 {
-				fmt.Println("Input here (w,s,a,d):")
+				if object.objecthealth[0] <= 0 {
+					playgame = 1
+					fmt.Println("Quitting instance...")
+					break
+				}
+				fmt.Println("Input here: [w,s,a,d to move] [p for hero stats]:")
 				Input.Scan()
 				command := Input.Text()
 				switch command {
@@ -369,6 +460,11 @@ func main() {
 					gamemap.moveHero(command, &object)
 				case "d":
 					gamemap.moveHero(command, &object)
+				case "p":
+					fmt.Println("Name: " + object.objectname[0])
+					fmt.Println("Description: " + object.objectdescription[0])
+					fmt.Println("Attack: " + strconv.Itoa(object.objectattack[0]))
+					fmt.Println("Health: " + strconv.Itoa(object.objecthealth[0]))
 				}
 			}
 		case "save":
