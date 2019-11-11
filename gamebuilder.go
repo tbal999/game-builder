@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/csv"
 	"fmt"
 	"math/rand"
 	"os"
@@ -39,6 +40,24 @@ func (o objectStorage) saveObject() {
 	fmt.Println(o.objectdescription)
 	fmt.Println(Marshalobjecthealth)
 	fmt.Println(Marshalobjectattack)
+	objectsave := [][]string{}
+	objectsave = append(objectsave, o.objectname)
+	objectsave = append(objectsave, o.objectdescription)
+	objectsave = append(objectsave, Marshalobjecthealth)
+	objectsave = append(objectsave, Marshalobjectattack)
+	file, err := os.Create("objectsavefile.csv")
+	if err != nil {
+		fmt.Println("Error!")
+	}
+	defer file.Close()
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+	for _, value := range objectsave {
+		err := writer.Write(value)
+		if err != nil {
+			fmt.Println("Error!")
+		}
+	}
 }
 
 func (w worldMap) saveMap() {
