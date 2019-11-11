@@ -9,7 +9,6 @@ import (
 )
 
 type objectStorage struct {
-	objectID          []int    `json:"objectID"`
 	objectname        []string `json:"objectname"`
 	objectdescription []string `json:"objectdescription"`
 	objecthealth      []int    `json:"objecthealth"`
@@ -20,6 +19,64 @@ type worldMap struct {
 	description []string  `json:"worldMapdescription"`
 	zone        [][][]int `json:"worldMapzone"`
 	livezone    [][][]int `json:"worldMaplivezone"`
+}
+
+func (o objectStorage) saveObject() {
+	fmt.Println(o.objectname)
+	fmt.Println(o.objectdescription)
+	fmt.Println(o.objecthealth)
+	fmt.Println(o.objectattack)
+	fmt.Println("convert to string...")
+	Marshalobjecthealth := []string{} //convert
+	Marshalobjectattack := []string{} //convert
+	for i := range o.objecthealth {
+		Marshalobjecthealth = append(Marshalobjecthealth, strconv.Itoa(o.objecthealth[i]))
+	}
+	for i := range o.objectattack {
+		Marshalobjectattack = append(Marshalobjectattack, strconv.Itoa(o.objectattack[i]))
+	}
+	fmt.Println(o.objectname) //CONVERT INTO CSV \/
+	fmt.Println(o.objectdescription)
+	fmt.Println(Marshalobjecthealth)
+	fmt.Println(Marshalobjectattack)
+}
+
+func (w worldMap) saveMap() {
+	fmt.Println(w.description)
+	fmt.Println(w.zone)     //convert
+	fmt.Println(w.livezone) //convert
+	fmt.Println("convert to string...")
+	Marshalzone1 := []string{}
+	Marshalzone2 := [][]string{}
+	Marshalzone3 := [][][]string{}
+	for i := range w.zone {
+		for i2 := range w.zone[i] {
+			for i3 := range w.zone[i][i2] {
+				Marshalzone1 = append(Marshalzone1, strconv.Itoa(w.zone[i][i2][i3]))
+			}
+			Marshalzone2 = append(Marshalzone2, Marshalzone1)
+			Marshalzone1 = []string{}
+		}
+		Marshalzone3 = append(Marshalzone3, Marshalzone2)
+		Marshalzone2 = [][]string{}
+	}
+	Marshallivezone1 := []string{}
+	Marshallivezone2 := [][]string{}
+	Marshallivezone3 := [][][]string{}
+	for i := range w.livezone {
+		for i2 := range w.livezone[i] {
+			for i3 := range w.livezone[i][i2] {
+				Marshallivezone1 = append(Marshallivezone1, strconv.Itoa(w.zone[i][i2][i3]))
+			}
+			Marshallivezone2 = append(Marshallivezone2, Marshallivezone1)
+			Marshallivezone1 = []string{}
+		}
+		Marshallivezone3 = append(Marshallivezone3, Marshallivezone2)
+		Marshallivezone2 = [][]string{}
+	}
+	fmt.Println(w.description) //CONVERT INTO CSV \/
+	fmt.Println(Marshalzone3)
+	fmt.Println(Marshallivezone3)
 }
 
 func (w *worldMap) interaction(z, y, x int, o *objectStorage) {
@@ -429,6 +486,11 @@ func main() {
 			gamemap.printMap()
 		case "viewworld":
 			gamemap.fullMap()
+		case "save":
+			gamemap.saveMap()
+			object.saveObject()
+		case "q":
+			gameover = 1
 		case "play":
 			playgame := 0
 			if len(gamemap.zone) == 0 {
@@ -467,10 +529,6 @@ func main() {
 					fmt.Println("Health: " + strconv.Itoa(object.objecthealth[0]))
 				}
 			}
-		case "save":
-			savegame(object, gamemap)
-		case "q":
-			gameover = 1
 		}
 	}
 }
