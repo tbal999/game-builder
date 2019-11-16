@@ -360,6 +360,31 @@ func (x *objectStorage) createObject() {
 	*x = i
 }
 
+func (x *objectStorage) createHero() {
+	fmt.Println("")
+	Scanner := bufio.NewScanner(os.Stdin)
+	fmt.Println("Type in name of your Hero Character:")
+	Scanner.Scan()
+	object_name := Scanner.Text()
+	fmt.Println("Type in description:")
+	Scanner.Scan()
+	object_description := Scanner.Text()
+	fmt.Println("Type in health:")
+	Scanner.Scan()
+	object_health1 := Scanner.Text()
+	object_health, _ := strconv.Atoi(object_health1)
+	fmt.Println("Type in attack:")
+	Scanner.Scan()
+	object_attack1 := Scanner.Text()
+	object_attack, _ := strconv.Atoi(object_attack1)
+	i := *x
+	i.objectname = append(i.objectname, object_name)
+	i.objectdescription = append(i.objectdescription, object_description)
+	i.objecthealth = append(i.objecthealth, object_health)
+	i.objectattack = append(i.objectattack, object_attack)
+	*x = i
+}
+
 func (x objectStorage) printObject() {
 	fmt.Println("")
 	Input := bufio.NewScanner(os.Stdin)
@@ -516,10 +541,11 @@ func main() {
 	Input := bufio.NewScanner(os.Stdin)
 	//game running
 	gameover := 0
+	object.createHero()
 	fmt.Println("===GAME BUILDER===")
+	fmt.Println("Now that you've created your hero, you can begin building the game!")
 	fmt.Println("For help simply type 'help'")
 	fmt.Println("Press 'q' to quit")
-	fmt.Println("The first object you build must be your hero character")
 	for gameover == 0 {
 		fmt.Println("===GAME BUILDER===")
 		fmt.Println("Input here:")
@@ -527,7 +553,7 @@ func main() {
 		result := Input.Text()
 		switch result {
 		case "help":
-			fmt.Println("buildobject: create an object. FIRST OBJECT YOU CREATE IS HERO.")
+			fmt.Println("buildobject: create an object.")
 			fmt.Println("allobject: view all objects by name and index")
 			fmt.Println("viewobject: allows you to view object (type in name)")
 			fmt.Println("placeobject: place object on the map (type in co-ordinates)")
