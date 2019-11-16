@@ -3,8 +3,10 @@ package main
 import (
 	"bufio"
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"os"
@@ -13,23 +15,34 @@ import (
 
 type objectStorage struct {
 	objectname        []string `json:"objectname"`
-	objectdescription []string `json:"objectdescription"`
+	objectDescription []string `json:"objectDescription"`
 	objecthealth      []int    `json:"objecthealth"`
 	objectattack      []int    `json:"objectattack"`
 }
 
 type worldMap struct {
-	description []string  `json:"worldMapdescription"`
-	zone        [][][]int `json:"worldMapzone"`
-	livezone    [][][]int `json:"worldMaplivezone"`
+	Description []string  `json:"worldMapDescription"`
+	Zone        [][][]int `json:"worldMapZone"`
+	LiveZone    [][][]int `json:"worldMapLiveZone"`
+}
+
+func (w worldMap) saveMap() {
+	convert := &w
+	output, err := json.Marshal(convert)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	_ = ioutil.WriteFile("worldmapsavedata.json", output, 0755)
+}
+
+func (w worldMap) loadMap() {
+	jsonFile, _ := ioutil.ReadFile("worldmapsavedata.json") ///////////// BIT THAT DOESN'T WORK /////////////
+	_ = json.Unmarshal([]byte(jsonFile), &w)
+	fmt.Println(w)
 }
 
 func (o objectStorage) saveObject() {
-	fmt.Println(o.objectname)
-	fmt.Println(o.objectdescription)
-	fmt.Println(o.objecthealth)
-	fmt.Println(o.objectattack)
-	fmt.Println("convert to string...")
 	Marshalobjecthealth := []string{} //convert
 	Marshalobjectattack := []string{} //convert
 	for i := range o.objecthealth {
@@ -39,12 +52,12 @@ func (o objectStorage) saveObject() {
 		Marshalobjectattack = append(Marshalobjectattack, strconv.Itoa(o.objectattack[i]))
 	}
 	fmt.Println(o.objectname) //CONVERT INTO CSV \/
-	fmt.Println(o.objectdescription)
+	fmt.Println(o.objectDescription)
 	fmt.Println(Marshalobjecthealth)
 	fmt.Println(Marshalobjectattack)
 	objectsave := [][]string{}
 	objectsave = append(objectsave, o.objectname)
-	objectsave = append(objectsave, o.objectdescription)
+	objectsave = append(objectsave, o.objectDescription)
 	objectsave = append(objectsave, Marshalobjecthealth)
 	objectsave = append(objectsave, Marshalobjectattack)
 	file, err := os.Create("objectsavefile.csv")
@@ -64,19 +77,13 @@ func (o objectStorage) saveObject() {
 
 func (o *objectStorage) loadObject() {
 	objectstorage := *o
-	// Open the file
 	csvfile, err := os.Open("objectsavefile.csv")
 	if err != nil {
 		log.Fatalln("Couldn't open the csv file", err)
 	}
-
-	// Parse the file
 	r := csv.NewReader(csvfile)
-	//r := csv.NewReader(bufio.NewReader(csvfile))
 	objectload := [][]string{}
-	// Iterate through the records
 	for {
-		// Read each record from csv
 		record, err := r.Read()
 		if err == io.EOF {
 			break
@@ -86,16 +93,14 @@ func (o *objectStorage) loadObject() {
 		}
 		objectload = append(objectload, record)
 	}
-	/*for yindex := range objectload {
-		for xindex := range objectload[yindex] {
-			fmt.Println(objectload[yindex][xindex])
-		}
-	}*/
+	if len(objectload) == 0 { //If nothing saved - return!
+		return
+	}
 	xindex := 0
 	yindex := 0
 	for xindex = 0; xindex < len(objectload[0]); xindex++ {
 		objectstorage.objectname = append(objectstorage.objectname, objectload[yindex][xindex])
-		objectstorage.objectdescription = append(objectstorage.objectdescription, objectload[yindex+1][xindex])
+		objectstorage.objectDescription = append(objectstorage.objectDescription, objectload[yindex+1][xindex])
 		health, _ := strconv.Atoi(objectload[yindex+2][xindex])
 		attack, _ := strconv.Atoi(objectload[yindex+3][xindex])
 		objectstorage.objecthealth = append(objectstorage.objecthealth, health)
@@ -105,55 +110,17 @@ func (o *objectStorage) loadObject() {
 	objectstorage.allObject()
 }
 
-func (w worldMap) saveMap() {
-	fmt.Println(w.description)
-	fmt.Println(w.zone)     //convert
-	fmt.Println(w.livezone) //convert
-	fmt.Println("convert to string...")
-	Marshalzone1 := []string{}
-	Marshalzone2 := [][]string{}
-	Marshalzone3 := [][][]string{}
-	for i := range w.zone {
-		for i2 := range w.zone[i] {
-			for i3 := range w.zone[i][i2] {
-				Marshalzone1 = append(Marshalzone1, strconv.Itoa(w.zone[i][i2][i3]))
-			}
-			Marshalzone2 = append(Marshalzone2, Marshalzone1)
-			Marshalzone1 = []string{}
-		}
-		Marshalzone3 = append(Marshalzone3, Marshalzone2)
-		Marshalzone2 = [][]string{}
-	}
-	Marshallivezone1 := []string{}
-	Marshallivezone2 := [][]string{}
-	Marshallivezone3 := [][][]string{}
-	for i := range w.livezone {
-		for i2 := range w.livezone[i] {
-			for i3 := range w.livezone[i][i2] {
-				Marshallivezone1 = append(Marshallivezone1, strconv.Itoa(w.zone[i][i2][i3]))
-			}
-			Marshallivezone2 = append(Marshallivezone2, Marshallivezone1)
-			Marshallivezone1 = []string{}
-		}
-		Marshallivezone3 = append(Marshallivezone3, Marshallivezone2)
-		Marshallivezone2 = [][]string{}
-	}
-	fmt.Println(w.description) //CONVERT INTO CSV \/
-	fmt.Println(Marshalzone3)
-	fmt.Println(Marshallivezone3)
-}
-
 func (w *worldMap) interaction(z, y, x int, o *objectStorage) {
 	world_map := *w
 	object_storage := *o
 	checker := 0
 	_, _, _, hero_attack := object_storage.grabObject(1)
-	object_name, object_description, object_health, object_attack := object_storage.grabObject(world_map.livezone[z][y][x])
+	object_name, object_Description, object_health, object_attack := object_storage.grabObject(world_map.LiveZone[z][y][x])
 	if object_name == "" {
 		return
 	}
 	fmt.Println("You have discovered a " + object_name)
-	fmt.Println(object_description)
+	fmt.Println(object_Description)
 	chance := randomNumber(1, 10)
 	if object_attack == 0 {
 		fmt.Println("It looks harmless")
@@ -169,7 +136,7 @@ func (w *worldMap) interaction(z, y, x int, o *objectStorage) {
 			object_storage.editObject(0, object_attack, 0)
 			fmt.Println("You took " + strconv.Itoa(object_attack) + " damage")
 			fmt.Println("It realises that you are quite strong and runs away!")
-			world_map.livezone[z][y][x] = 0
+			world_map.LiveZone[z][y][x] = 0
 			*w = world_map
 			*o = object_storage
 			return
@@ -182,7 +149,7 @@ func (w *worldMap) interaction(z, y, x int, o *objectStorage) {
 			fmt.Println("The " + object_name + " took " + strconv.Itoa(object_attack) + " damage")
 			if object_health <= 0 {
 				fmt.Println("The " + object_name + " died")
-				world_map.livezone[z][y][x] = 0
+				world_map.LiveZone[z][y][x] = 0
 				checker = 1
 			}
 			_, _, hhealth, _ := object_storage.grabObject(1)
@@ -223,7 +190,7 @@ func (x *objectStorage) grabObject(index int) (string, string, int, int) {
 	object_storage := *x
 	for i := range object_storage.objectname {
 		if i+1 == index {
-			return object_storage.objectname[i], object_storage.objectdescription[i], object_storage.objecthealth[i], object_storage.objectattack[i]
+			return object_storage.objectname[i], object_storage.objectDescription[i], object_storage.objecthealth[i], object_storage.objectattack[i]
 		}
 	}
 	return "", "", 0, 0
@@ -275,10 +242,10 @@ func (x *worldMap) buildMap2(slice [][]int, mapname string, twice int) {
 	world_map := *x
 	switch twice {
 	case 0:
-		world_map.zone = append(world_map.zone, slice)
-		world_map.description = append(world_map.description, mapname)
+		world_map.Zone = append(world_map.Zone, slice)
+		world_map.Description = append(world_map.Description, mapname)
 	case 1:
-		world_map.livezone = append(world_map.livezone, slice)
+		world_map.LiveZone = append(world_map.LiveZone, slice)
 	}
 	*x = world_map
 }
@@ -291,17 +258,17 @@ func (x worldMap) printMap() {
 	y1 := Scanner.Text()
 	y, _ := strconv.Atoi(y1)
 	fmt.Println("")
-	for i := range x.zone {
+	for i := range x.Zone {
 		if i == y {
-			for o := range x.zone[i] {
-				fmt.Println(x.description[i], x.zone[i][o])
+			for o := range x.Zone[i] {
+				fmt.Println(x.Description[i], x.Zone[i][o])
 			}
 		}
 	}
-	for i := range x.livezone {
+	for i := range x.LiveZone {
 		if i == y {
-			for o := range x.livezone[i] {
-				fmt.Println(x.description[i], x.livezone[i][o])
+			for o := range x.LiveZone[i] {
+				fmt.Println(x.Description[i], x.LiveZone[i][o])
 			}
 		}
 	}
@@ -309,19 +276,19 @@ func (x worldMap) printMap() {
 
 func (x worldMap) printZone(y int) {
 	fmt.Println("Your location")
-	for i := range x.zone {
+	for i := range x.Zone {
 		if i == y {
-			for o := range x.zone[i] {
-				fmt.Println(i, x.zone[i][o])
+			for o := range x.Zone[i] {
+				fmt.Println(i, x.Zone[i][o])
 			}
 		}
 	}
 	fmt.Println("")
 	fmt.Println("Objects")
-	for i := range x.livezone {
+	for i := range x.LiveZone {
 		if i == y {
-			for o := range x.livezone[i] {
-				fmt.Println(i, x.livezone[i][o])
+			for o := range x.LiveZone[i] {
+				fmt.Println(i, x.LiveZone[i][o])
 			}
 		}
 	}
@@ -330,8 +297,8 @@ func (x worldMap) printZone(y int) {
 func (x worldMap) fullMap() {
 	fmt.Println("")
 	fmt.Println("Index, Description.")
-	for i := range x.description {
-		fmt.Println(i, x.description[i])
+	for i := range x.Description {
+		fmt.Println(i, x.Description[i])
 	}
 }
 
@@ -341,9 +308,9 @@ func (x *objectStorage) createObject() {
 	fmt.Println("Type in name of object:")
 	Scanner.Scan()
 	object_name := Scanner.Text()
-	fmt.Println("Type in description:")
+	fmt.Println("Type in Description:")
 	Scanner.Scan()
-	object_description := Scanner.Text()
+	object_Description := Scanner.Text()
 	fmt.Println("Type in health:")
 	Scanner.Scan()
 	object_health1 := Scanner.Text()
@@ -354,21 +321,25 @@ func (x *objectStorage) createObject() {
 	object_attack, _ := strconv.Atoi(object_attack1)
 	i := *x
 	i.objectname = append(i.objectname, object_name)
-	i.objectdescription = append(i.objectdescription, object_description)
+	i.objectDescription = append(i.objectDescription, object_Description)
 	i.objecthealth = append(i.objecthealth, object_health)
 	i.objectattack = append(i.objectattack, object_attack)
 	*x = i
 }
 
 func (x *objectStorage) createHero() {
-	fmt.Println("")
 	Scanner := bufio.NewScanner(os.Stdin)
+	fmt.Println("===GAME BUILDER===")
 	fmt.Println("Type in name of your Hero Character:")
+	fmt.Println("(Leave Blank to skip hero creation, i.e if you want to load the hero character in a save)")
 	Scanner.Scan()
 	object_name := Scanner.Text()
-	fmt.Println("Type in description:")
+	if object_name == "" {
+		return
+	}
+	fmt.Println("Type in Description of Hero:")
 	Scanner.Scan()
-	object_description := Scanner.Text()
+	object_Description := Scanner.Text()
 	fmt.Println("Type in health:")
 	Scanner.Scan()
 	object_health1 := Scanner.Text()
@@ -379,7 +350,7 @@ func (x *objectStorage) createHero() {
 	object_attack, _ := strconv.Atoi(object_attack1)
 	i := *x
 	i.objectname = append(i.objectname, object_name)
-	i.objectdescription = append(i.objectdescription, object_description)
+	i.objectDescription = append(i.objectDescription, object_Description)
 	i.objecthealth = append(i.objecthealth, object_health)
 	i.objectattack = append(i.objectattack, object_attack)
 	*x = i
@@ -394,7 +365,7 @@ func (x objectStorage) printObject() {
 	for i := range x.objectname {
 		if x.objectname[i] == result2 {
 			fmt.Printf("name: %s\n", x.objectname[i])
-			fmt.Printf("description: %s\n", x.objectdescription[i])
+			fmt.Printf("Description: %s\n", x.objectDescription[i])
 			fmt.Printf("health: %d\n", x.objecthealth[i])
 			fmt.Printf("attack: %d\n", x.objectattack[i])
 		}
@@ -420,22 +391,22 @@ func (w *worldMap) placeObject(y objectStorage) {
 	Input.Scan()
 	ycoord1 := Input.Text()
 	ycoord, _ := strconv.Atoi(ycoord1)
-	for i := range world_map.zone {
+	for i := range world_map.Zone {
 		if i == map_index {
-			for i2 := range world_map.zone[i] {
+			for i2 := range world_map.Zone[i] {
 				if i2 == ycoord {
-					for i3 := range world_map.zone[i][i2] {
+					for i3 := range world_map.Zone[i][i2] {
 						if i3 == xcoord {
 							for objectindex := range y.objectname {
 								if y.objectname[objectindex] == object_name {
-									fmt.Println(world_map.zone[i][i2][i3])
+									fmt.Println(world_map.Zone[i][i2][i3])
 									fmt.Println(objectindex)
 									fmt.Println(y.objectname)
 									if objectindex == 0 {
-										world_map.zone[i][i2][i3] = objectindex + 1
+										world_map.Zone[i][i2][i3] = objectindex + 1
 									}
 									if objectindex != 0 {
-										world_map.livezone[i][i2][i3] = objectindex + 1
+										world_map.LiveZone[i][i2][i3] = objectindex + 1
 									}
 								}
 							}
@@ -451,10 +422,10 @@ func (w *worldMap) placeObject(y objectStorage) {
 
 func (w *worldMap) moveHero(cmd string, o *objectStorage) {
 	world_map := *w
-	for i := range world_map.zone {
-		for a := range world_map.zone[i] {
-			for b := range world_map.zone[i][a] {
-				if world_map.zone[i][a][b] == 1 {
+	for i := range world_map.Zone {
+		for a := range world_map.Zone[i] {
+			for b := range world_map.Zone[i][a] {
+				if world_map.Zone[i][a][b] == 1 {
 					switch cmd {
 					case "w":
 						if a == 0 {
@@ -462,23 +433,23 @@ func (w *worldMap) moveHero(cmd string, o *objectStorage) {
 							return
 						}
 						if a != 0 {
-							world_map.zone[i][a][b] = 0
-							world_map.zone[i][a-1][b] = 1 // OBJECT INTERACTION
+							world_map.Zone[i][a][b] = 0
+							world_map.Zone[i][a-1][b] = 1 // OBJECT INTERACTION
 							world_map.printZone(i)
 							w.interaction(i, a-1, b, o)
 							*w = world_map
 							return
 						}
 					case "s":
-						if a != len(world_map.zone[i])-1 {
-							world_map.zone[i][a][b] = 0
-							world_map.zone[i][a+1][b] = 1 // OBJECT INTERACTION
+						if a != len(world_map.Zone[i])-1 {
+							world_map.Zone[i][a][b] = 0
+							world_map.Zone[i][a+1][b] = 1 // OBJECT INTERACTION
 							world_map.printZone(i)
 							w.interaction(i, a+1, b, o)
 							*w = world_map
 							return
 						}
-						if a == len(world_map.zone[i])-1 {
+						if a == len(world_map.Zone[i])-1 {
 							world_map.printZone(i)
 							return
 						}
@@ -488,37 +459,37 @@ func (w *worldMap) moveHero(cmd string, o *objectStorage) {
 								world_map.printZone(i)
 								return
 							}
-							world_map.zone[i][a][b] = 0
-							world_map.zone[i-1][len(world_map.zone[i-1])-1][len(world_map.zone[i-1][0])-1] = 1 // OBJECT INTERACTION
+							world_map.Zone[i][a][b] = 0
+							world_map.Zone[i-1][len(world_map.Zone[i-1])-1][len(world_map.Zone[i-1][0])-1] = 1 // OBJECT INTERACTION
 							world_map.printZone(i - 1)
-							w.interaction(i-1, len(world_map.zone[i-1])-1, len(world_map.zone[i-1][0])-1, o)
+							w.interaction(i-1, len(world_map.Zone[i-1])-1, len(world_map.Zone[i-1][0])-1, o)
 							*w = world_map
 							return
 						}
 						if b != 0 {
-							world_map.zone[i][a][b] = 0
-							world_map.zone[i][a][b-1] = 1 // OBJECT INTERACTION
+							world_map.Zone[i][a][b] = 0
+							world_map.Zone[i][a][b-1] = 1 // OBJECT INTERACTION
 							w.interaction(i, a, b-1, o)
 							world_map.printZone(i)
 							*w = world_map
 							return
 						}
 					case "d":
-						if b == len(world_map.zone[i][a])-1 {
-							if i == len(world_map.zone)-1 {
+						if b == len(world_map.Zone[i][a])-1 {
+							if i == len(world_map.Zone)-1 {
 								world_map.printZone(i)
 								return
 							}
-							world_map.zone[i][a][b] = 0
-							world_map.zone[i+1][len(world_map.zone[i+1])-1][0] = 1 // OBJECT INTERACTION
+							world_map.Zone[i][a][b] = 0
+							world_map.Zone[i+1][len(world_map.Zone[i+1])-1][0] = 1 // OBJECT INTERACTION
 							world_map.printZone(i + 1)
-							w.interaction(i+1, len(world_map.zone[i+1])-1, 0, o)
+							w.interaction(i+1, len(world_map.Zone[i+1])-1, 0, o)
 							*w = world_map
 							return
 						}
-						if b != len(world_map.zone[i][a])-1 {
-							world_map.zone[i][a][b] = 0
-							world_map.zone[i][a][b+1] = 1 // OBJECT INTERACTION
+						if b != len(world_map.Zone[i][a])-1 {
+							world_map.Zone[i][a][b] = 0
+							world_map.Zone[i][a][b+1] = 1 // OBJECT INTERACTION
 							world_map.printZone(i)
 							w.interaction(i, a, b+1, o)
 							*w = world_map
@@ -543,7 +514,7 @@ func main() {
 	gameover := 0
 	object.createHero()
 	fmt.Println("===GAME BUILDER===")
-	fmt.Println("Now that you've created your hero, you can begin building the game!")
+	fmt.Println("Now you can begin building the game!")
 	fmt.Println("For help simply type 'help'")
 	fmt.Println("Press 'q' to quit")
 	for gameover == 0 {
@@ -581,11 +552,12 @@ func main() {
 			object.saveObject()
 		case "load":
 			object.loadObject()
+			gamemap.loadMap()
 		case "q":
 			gameover = 1
 		case "play":
 			playgame := 0
-			if len(gamemap.zone) == 0 {
+			if len(gamemap.Zone) == 0 {
 				fmt.Println("No maps! Quitting instance...")
 				playgame = 1
 				break
@@ -616,7 +588,7 @@ func main() {
 					gamemap.moveHero(command, &object)
 				case "p":
 					fmt.Println("Name: " + object.objectname[0])
-					fmt.Println("Description: " + object.objectdescription[0])
+					fmt.Println("Description: " + object.objectDescription[0])
 					fmt.Println("Attack: " + strconv.Itoa(object.objectattack[0]))
 					fmt.Println("Health: " + strconv.Itoa(object.objecthealth[0]))
 				}
