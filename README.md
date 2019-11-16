@@ -10,6 +10,8 @@ buildmap: allows you to create an X by X map by an index<br/>
 viewworld: prints out all maps by index.<br/>
 viewmap: prints out map by index. First map would be 0, second 1 etc.<br/>
 play: initiates the game<br/>
+save: saves the game<br/>
+load: loads the game<br/>
 q: exit the game<br/>
 
 <b>Objects: objects are all items in game, except the map.</b><br/> 
