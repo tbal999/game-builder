@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"encoding/csv"
 	"fmt"
+	"io"
+	"log"
 	"math/rand"
 	"os"
 	"strconv"
@@ -58,6 +60,49 @@ func (o objectStorage) saveObject() {
 			fmt.Println("Error!")
 		}
 	}
+}
+
+func (o *objectStorage) loadObject() {
+	objectstorage := *o
+	// Open the file
+	csvfile, err := os.Open("objectsavefile.csv")
+	if err != nil {
+		log.Fatalln("Couldn't open the csv file", err)
+	}
+
+	// Parse the file
+	r := csv.NewReader(csvfile)
+	//r := csv.NewReader(bufio.NewReader(csvfile))
+	objectload := [][]string{}
+	// Iterate through the records
+	for {
+		// Read each record from csv
+		record, err := r.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatal(err)
+		}
+		objectload = append(objectload, record)
+	}
+	/*for yindex := range objectload {
+		for xindex := range objectload[yindex] {
+			fmt.Println(objectload[yindex][xindex])
+		}
+	}*/
+	xindex := 0
+	yindex := 0
+	for xindex = 0; xindex < len(objectload[0]); xindex++ {
+		objectstorage.objectname = append(objectstorage.objectname, objectload[yindex][xindex])
+		objectstorage.objectdescription = append(objectstorage.objectdescription, objectload[yindex+1][xindex])
+		health, _ := strconv.Atoi(objectload[yindex+2][xindex])
+		attack, _ := strconv.Atoi(objectload[yindex+3][xindex])
+		objectstorage.objecthealth = append(objectstorage.objecthealth, health)
+		objectstorage.objectattack = append(objectstorage.objectattack, attack)
+	}
+	*o = objectstorage
+	objectstorage.allObject()
 }
 
 func (w worldMap) saveMap() {
@@ -508,6 +553,8 @@ func main() {
 		case "save":
 			gamemap.saveMap()
 			object.saveObject()
+		case "load":
+			object.loadObject()
 		case "q":
 			gameover = 1
 		case "play":
