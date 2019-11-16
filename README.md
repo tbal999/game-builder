@@ -38,8 +38,6 @@ When you press play, you will be able to control the hero character and navigate
 
 <b>TODO:</b><br/>
 Error handling...<br/>
-Implement save functionality.<br/> (OBJECT SAVE COMPLETED)
-implement load functionality.<br/>
 
 <b>Long-term TODO:</b><br/>
 Create a GUI on top of this interface, maybe a web app, so that it can be used to create dnd-lite scenarios.<br/>
