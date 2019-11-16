@@ -36,10 +36,12 @@ func (w worldMap) saveMap() {
 	_ = ioutil.WriteFile("worldmapsavedata.json", output, 0755)
 }
 
-func (w worldMap) loadMap() {
+func (w *worldMap) loadMap() {
+	worldmap := *w
 	jsonFile, _ := ioutil.ReadFile("worldmapsavedata.json") ///////////// BIT THAT DOESN'T WORK /////////////
-	_ = json.Unmarshal([]byte(jsonFile), &w)
+	_ = json.Unmarshal([]byte(jsonFile), &worldmap)
 	fmt.Println(w)
+	*w = worldmap
 }
 
 func (o objectStorage) saveObject() {
