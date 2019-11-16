@@ -20,14 +20,22 @@ func (w worldMap) saveMap() {
 		fmt.Println(err)
 		return
 	}
-	file, _ := json.Marshal(output)
-	_ = ioutil.WriteFile("worldmapsavedata.json", file, 0755)
+	file, err := json.Marshal(output)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	ioutil.WriteFile("worldmapsavedata.json", file, 0755)
 }
 
 func (w worldMap) loadMap() {
 	outputmap := worldMap{}
-	jsonFile, _ := ioutil.ReadFile("worldmapsavedata.json") ///////////// BIT THAT DOESN'T WORK /////////////
-	_ = json.Unmarshal([]byte(jsonFile), &outputmap)
+	jsonFile, err := ioutil.ReadFile("worldmapsavedata.json") ///////////// BIT THAT DOESN'T WORK /////////////
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	json.Unmarshal([]byte(jsonFile), &outputmap)
 	fmt.Println(outputmap)
 }
 
