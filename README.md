@@ -1,5 +1,7 @@
 # game-builder
-A simple command line for building dungeon crawler games (under construction!!!)
+A simple command line for building dungeon crawler games.
+
+This programme involved: string interpolation, data structure (slices/arrays) manipulation, JSON exporting/importing, Structs/Classes, User input handling, switches, for loops, while loops, exception handling, if / else statements and game logic.
 
 <b>Commands: all commands are listed below.</b><br/>
 buildobject: create an object.<br/>
