@@ -25,7 +25,7 @@ type worldMap struct {
 
 func saveGame(w worldMap, o objectStorage) {
 	Scanner := bufio.NewScanner(os.Stdin)
-	fmt.Println("Type in a name for the savefile:")
+	fmt.Println("Type in a name for the savefile (this will be saved in same folder as executable):")
 	Scanner.Scan()
 	savefile := Scanner.Text()
 	convertmap := &w
@@ -42,23 +42,23 @@ func saveGame(w worldMap, o objectStorage) {
 		return
 	}
 	_ = ioutil.WriteFile(savefile+"2"+".json", output2, 0755)
+	fmt.Println("Saved " + savefile + "!")
 }
 
 func loadGame(w *worldMap, o *objectStorage) {
 	Scanner := bufio.NewScanner(os.Stdin)
-	fmt.Println("Type in name of savefile you wish to load:")
+	fmt.Println("Type in name of savefile you wish to load (has to be in same folder as executable):")
 	Scanner.Scan()
 	savefile := Scanner.Text()
 	worldmap := *w
 	jsonFile, _ := ioutil.ReadFile(savefile + ".json")
 	_ = json.Unmarshal([]byte(jsonFile), &worldmap)
-	fmt.Println(w)
 	*w = worldmap
 	objectstorage := *o
 	jsonFile2, _ := ioutil.ReadFile(savefile + "2" + ".json")
 	_ = json.Unmarshal([]byte(jsonFile2), &objectstorage)
-	fmt.Println(o)
 	*o = objectstorage
+	fmt.Println("Loaded " + savefile + "!")
 }
 
 func (w *worldMap) interaction(z, y, x int, o *objectStorage) {
