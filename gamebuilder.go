@@ -2,22 +2,19 @@ package main
 
 import (
 	"bufio"
-	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
-	"log"
 	"math/rand"
 	"os"
 	"strconv"
 )
 
 type objectStorage struct {
-	objectname        []string `json:"objectname"`
-	objectDescription []string `json:"objectDescription"`
-	objecthealth      []int    `json:"objecthealth"`
-	objectattack      []int    `json:"objectattack"`
+	ObjectName        []string `json:"objectStorageObjectName"`
+	ObjectDescription []string `json:"objectStorageObjectDescription"`
+	ObjectHealth      []int    `json:"objectStorageObjectHealth"`
+	ObjectAttack      []int    `json:"objectStorageObjectAttack"`
 }
 
 type worldMap struct {
@@ -26,90 +23,42 @@ type worldMap struct {
 	LiveZone    [][][]int `json:"worldMapLiveZone"`
 }
 
-func (w worldMap) saveMap() {
-	convert := &w
-	output, err := json.Marshal(convert)
+func saveGame(w worldMap, o objectStorage) {
+	Scanner := bufio.NewScanner(os.Stdin)
+	fmt.Println("Type in a name for the savefile:")
+	Scanner.Scan()
+	savefile := Scanner.Text()
+	convertmap := &w
+	convertobject := &o
+	output, err := json.Marshal(convertmap)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	_ = ioutil.WriteFile("worldmapsavedata.json", output, 0755)
+	_ = ioutil.WriteFile(savefile+".json", output, 0755)
+	output2, err := json.Marshal(convertobject)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	_ = ioutil.WriteFile(savefile+"2"+".json", output2, 0755)
 }
 
-func (w *worldMap) loadMap() {
+func loadGame(w *worldMap, o *objectStorage) {
+	Scanner := bufio.NewScanner(os.Stdin)
+	fmt.Println("Type in name of savefile you wish to load:")
+	Scanner.Scan()
+	savefile := Scanner.Text()
 	worldmap := *w
-	jsonFile, _ := ioutil.ReadFile("worldmapsavedata.json") ///////////// BIT THAT DOESN'T WORK /////////////
+	jsonFile, _ := ioutil.ReadFile(savefile + ".json")
 	_ = json.Unmarshal([]byte(jsonFile), &worldmap)
 	fmt.Println(w)
 	*w = worldmap
-}
-
-func (o objectStorage) saveObject() {
-	Marshalobjecthealth := []string{} //convert
-	Marshalobjectattack := []string{} //convert
-	for i := range o.objecthealth {
-		Marshalobjecthealth = append(Marshalobjecthealth, strconv.Itoa(o.objecthealth[i]))
-	}
-	for i := range o.objectattack {
-		Marshalobjectattack = append(Marshalobjectattack, strconv.Itoa(o.objectattack[i]))
-	}
-	fmt.Println(o.objectname) //CONVERT INTO CSV \/
-	fmt.Println(o.objectDescription)
-	fmt.Println(Marshalobjecthealth)
-	fmt.Println(Marshalobjectattack)
-	objectsave := [][]string{}
-	objectsave = append(objectsave, o.objectname)
-	objectsave = append(objectsave, o.objectDescription)
-	objectsave = append(objectsave, Marshalobjecthealth)
-	objectsave = append(objectsave, Marshalobjectattack)
-	file, err := os.Create("objectsavefile.csv")
-	if err != nil {
-		fmt.Println("Error!")
-	}
-	defer file.Close()
-	writer := csv.NewWriter(file)
-	defer writer.Flush()
-	for _, value := range objectsave {
-		err := writer.Write(value)
-		if err != nil {
-			fmt.Println("Error!")
-		}
-	}
-}
-
-func (o *objectStorage) loadObject() {
 	objectstorage := *o
-	csvfile, err := os.Open("objectsavefile.csv")
-	if err != nil {
-		log.Fatalln("Couldn't open the csv file", err)
-	}
-	r := csv.NewReader(csvfile)
-	objectload := [][]string{}
-	for {
-		record, err := r.Read()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			log.Fatal(err)
-		}
-		objectload = append(objectload, record)
-	}
-	if len(objectload) == 0 { //If nothing saved - return!
-		return
-	}
-	xindex := 0
-	yindex := 0
-	for xindex = 0; xindex < len(objectload[0]); xindex++ {
-		objectstorage.objectname = append(objectstorage.objectname, objectload[yindex][xindex])
-		objectstorage.objectDescription = append(objectstorage.objectDescription, objectload[yindex+1][xindex])
-		health, _ := strconv.Atoi(objectload[yindex+2][xindex])
-		attack, _ := strconv.Atoi(objectload[yindex+3][xindex])
-		objectstorage.objecthealth = append(objectstorage.objecthealth, health)
-		objectstorage.objectattack = append(objectstorage.objectattack, attack)
-	}
+	jsonFile2, _ := ioutil.ReadFile(savefile + "2" + ".json")
+	_ = json.Unmarshal([]byte(jsonFile2), &objectstorage)
+	fmt.Println(o)
 	*o = objectstorage
-	objectstorage.allObject()
 }
 
 func (w *worldMap) interaction(z, y, x int, o *objectStorage) {
@@ -171,10 +120,10 @@ func (w *worldMap) interaction(z, y, x int, o *objectStorage) {
 
 func (x *objectStorage) editObject(index, dmg, attack int) {
 	object_storage := *x
-	for i := range object_storage.objectname {
+	for i := range object_storage.ObjectName {
 		if i == index {
-			object_storage.objecthealth[i] = object_storage.objecthealth[i] - dmg
-			object_storage.objectattack[i] = object_storage.objectattack[i] + attack
+			object_storage.ObjectHealth[i] = object_storage.ObjectHealth[i] - dmg
+			object_storage.ObjectAttack[i] = object_storage.ObjectAttack[i] + attack
 		}
 	}
 	*x = object_storage
@@ -190,9 +139,9 @@ func randomNumber(min, max int) int {
 
 func (x *objectStorage) grabObject(index int) (string, string, int, int) {
 	object_storage := *x
-	for i := range object_storage.objectname {
+	for i := range object_storage.ObjectName {
 		if i+1 == index {
-			return object_storage.objectname[i], object_storage.objectDescription[i], object_storage.objecthealth[i], object_storage.objectattack[i]
+			return object_storage.ObjectName[i], object_storage.ObjectDescription[i], object_storage.ObjectHealth[i], object_storage.ObjectAttack[i]
 		}
 	}
 	return "", "", 0, 0
@@ -200,8 +149,8 @@ func (x *objectStorage) grabObject(index int) (string, string, int, int) {
 
 func (x *objectStorage) allObject() {
 	object_storage := *x
-	for i := range object_storage.objectname {
-		fmt.Println(i, object_storage.objectname[i])
+	for i := range object_storage.ObjectName {
+		fmt.Println(i, object_storage.ObjectName[i])
 	}
 }
 
@@ -322,10 +271,10 @@ func (x *objectStorage) createObject() {
 	object_attack1 := Scanner.Text()
 	object_attack, _ := strconv.Atoi(object_attack1)
 	i := *x
-	i.objectname = append(i.objectname, object_name)
-	i.objectDescription = append(i.objectDescription, object_Description)
-	i.objecthealth = append(i.objecthealth, object_health)
-	i.objectattack = append(i.objectattack, object_attack)
+	i.ObjectName = append(i.ObjectName, object_name)
+	i.ObjectDescription = append(i.ObjectDescription, object_Description)
+	i.ObjectHealth = append(i.ObjectHealth, object_health)
+	i.ObjectAttack = append(i.ObjectAttack, object_attack)
 	*x = i
 }
 
@@ -351,10 +300,10 @@ func (x *objectStorage) createHero() {
 	object_attack1 := Scanner.Text()
 	object_attack, _ := strconv.Atoi(object_attack1)
 	i := *x
-	i.objectname = append(i.objectname, object_name)
-	i.objectDescription = append(i.objectDescription, object_Description)
-	i.objecthealth = append(i.objecthealth, object_health)
-	i.objectattack = append(i.objectattack, object_attack)
+	i.ObjectName = append(i.ObjectName, object_name)
+	i.ObjectDescription = append(i.ObjectDescription, object_Description)
+	i.ObjectHealth = append(i.ObjectHealth, object_health)
+	i.ObjectAttack = append(i.ObjectAttack, object_attack)
 	*x = i
 }
 
@@ -364,12 +313,12 @@ func (x objectStorage) printObject() {
 	fmt.Println("Type in name of object you are looking for:")
 	Input.Scan()
 	result2 := Input.Text()
-	for i := range x.objectname {
-		if x.objectname[i] == result2 {
-			fmt.Printf("name: %s\n", x.objectname[i])
-			fmt.Printf("Description: %s\n", x.objectDescription[i])
-			fmt.Printf("health: %d\n", x.objecthealth[i])
-			fmt.Printf("attack: %d\n", x.objectattack[i])
+	for i := range x.ObjectName {
+		if x.ObjectName[i] == result2 {
+			fmt.Printf("name: %s\n", x.ObjectName[i])
+			fmt.Printf("Description: %s\n", x.ObjectDescription[i])
+			fmt.Printf("health: %d\n", x.ObjectHealth[i])
+			fmt.Printf("attack: %d\n", x.ObjectAttack[i])
 		}
 	}
 }
@@ -399,11 +348,11 @@ func (w *worldMap) placeObject(y objectStorage) {
 				if i2 == ycoord {
 					for i3 := range world_map.Zone[i][i2] {
 						if i3 == xcoord {
-							for objectindex := range y.objectname {
-								if y.objectname[objectindex] == object_name {
+							for objectindex := range y.ObjectName {
+								if y.ObjectName[objectindex] == object_name {
 									fmt.Println(world_map.Zone[i][i2][i3])
 									fmt.Println(objectindex)
-									fmt.Println(y.objectname)
+									fmt.Println(y.ObjectName)
 									if objectindex == 0 {
 										world_map.Zone[i][i2][i3] = objectindex + 1
 									}
@@ -530,8 +479,8 @@ func main() {
 			fmt.Println("allobject: view all objects by name and index")
 			fmt.Println("viewobject: allows you to view object (type in name)")
 			fmt.Println("placeobject: place object on the map (type in co-ordinates)")
+			fmt.Println("allmap: prints out all maps by index.")
 			fmt.Println("buildmap: allows you to create an X by X map by an index")
-			fmt.Println("viewworld: prints out all maps by index.")
 			fmt.Println("viewmap: prints out map by index. First map would be 0, second 1 etc.")
 			fmt.Println("play: initiates the game")
 			fmt.Println("q: exit the game\n")
@@ -547,14 +496,12 @@ func main() {
 			gamemap.buildMap()
 		case "viewmap":
 			gamemap.printMap()
-		case "viewworld":
+		case "allmap":
 			gamemap.fullMap()
 		case "save":
-			gamemap.saveMap()
-			object.saveObject()
+			saveGame(gamemap, object)
 		case "load":
-			object.loadObject()
-			gamemap.loadMap()
+			loadGame(&gamemap, &object)
 		case "q":
 			gameover = 1
 		case "play":
@@ -568,7 +515,7 @@ func main() {
 			fmt.Println("Loading instance...")
 			fmt.Println("w s a d to move around. p for hero stats. q to quit game")
 			for playgame == 0 {
-				if object.objecthealth[0] <= 0 {
+				if object.ObjectHealth[0] <= 0 {
 					playgame = 1
 					fmt.Println("Quitting instance...")
 					break
@@ -589,10 +536,10 @@ func main() {
 				case "d":
 					gamemap.moveHero(command, &object)
 				case "p":
-					fmt.Println("Name: " + object.objectname[0])
-					fmt.Println("Description: " + object.objectDescription[0])
-					fmt.Println("Attack: " + strconv.Itoa(object.objectattack[0]))
-					fmt.Println("Health: " + strconv.Itoa(object.objecthealth[0]))
+					fmt.Println("Name: " + object.ObjectName[0])
+					fmt.Println("Description: " + object.ObjectDescription[0])
+					fmt.Println("Attack: " + strconv.Itoa(object.ObjectAttack[0]))
+					fmt.Println("Health: " + strconv.Itoa(object.ObjectHealth[0]))
 				}
 			}
 		}
