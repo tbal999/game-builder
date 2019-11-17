@@ -10,6 +10,8 @@ import (
 	"strconv"
 )
 
+// This is how all objects in the gamebuilder are stored. Objects have a name, description, health and attack. They are each stored in 1D slices.
+// The object is accessed by index.
 type objectStorage struct {
 	ObjectName        []string `json:"objectStorageObjectName"`
 	ObjectDescription []string `json:"objectStorageObjectDescription"`
@@ -17,12 +19,16 @@ type objectStorage struct {
 	ObjectAttack      []int    `json:"objectStorageObjectAttack"`
 }
 
+// This is how all maps are in the gamebuilder are stored. Maps have a description, an X axis and a Y axis. The 2D maps are stored in a 3D array.
+// The maps are accessed by 3D array index.
 type worldMap struct {
 	Description []string  `json:"worldMapDescription"`
 	Zone        [][][]int `json:"worldMapZone"`
 	LiveZone    [][][]int `json:"worldMapLiveZone"`
 }
 
+// This function lets user save what they are created so far. The savegame function exports the objectStorage and worldMap structs as .JSON file.
+// The user can input the name of the file they wish to save - to prevent overwriting files / enables multiple saves.
 func saveGame(w worldMap, o objectStorage) {
 	Scanner := bufio.NewScanner(os.Stdin)
 	fmt.Println("Type in a name for the savefile (this will be saved in same folder as executable):")
@@ -45,6 +51,7 @@ func saveGame(w worldMap, o objectStorage) {
 	fmt.Println("Saved " + savefile + "!")
 }
 
+// This function lets user load up a savegame they have saved previously. The function converts the .JSON file into a Struct.
 func loadGame(w *worldMap, o *objectStorage) {
 	Scanner := bufio.NewScanner(os.Stdin)
 	fmt.Println("Type in name of savefile you wish to load (has to be in same folder as executable):")
@@ -61,6 +68,7 @@ func loadGame(w *worldMap, o *objectStorage) {
 	fmt.Println("Loaded " + savefile + "!")
 }
 
+//This function enables interaction between the Hero object and another object.
 func (w *worldMap) interaction(z, y, x int, o *objectStorage) {
 	world_map := *w
 	object_storage := *o
@@ -118,6 +126,7 @@ func (w *worldMap) interaction(z, y, x int, o *objectStorage) {
 	*o = object_storage
 }
 
+// This function enables the editing of an objects stats i.e their health if they have been attached.
 func (x *objectStorage) editObject(index, dmg, attack int) {
 	object_storage := *x
 	for i := range object_storage.ObjectName {
@@ -129,6 +138,7 @@ func (x *objectStorage) editObject(index, dmg, attack int) {
 	*x = object_storage
 }
 
+// This function geneates a random number between an minimum and maximum integer.
 func randomNumber(min, max int) int {
 	z := rand.Intn(max)
 	if z < min {
@@ -137,6 +147,7 @@ func randomNumber(min, max int) int {
 	return z
 }
 
+// This function returns an object name/description/health/attack by its index.
 func (x *objectStorage) grabObject(index int) (string, string, int, int) {
 	object_storage := *x
 	for i := range object_storage.ObjectName {
@@ -147,6 +158,7 @@ func (x *objectStorage) grabObject(index int) (string, string, int, int) {
 	return "", "", 0, 0
 }
 
+// This function prints out all object names/index in the objectStorage struct.
 func (x *objectStorage) allObject() {
 	object_storage := *x
 	for i := range object_storage.ObjectName {
@@ -154,11 +166,7 @@ func (x *objectStorage) allObject() {
 	}
 }
 
-func savegame(o objectStorage, w worldMap) { //either JSON or CSV export
-	fmt.Println("Not yet implemented")
-
-}
-
+//This function lets user create a map of X / Y axis of any size.
 func (world_map *worldMap) buildMap() {
 	fmt.Println("")
 	Scanner := bufio.NewScanner(os.Stdin)
@@ -189,6 +197,7 @@ func (world_map *worldMap) buildMap() {
 	}
 }
 
+// This is stage 2 of the buildmap function. To ensure that each slice inserted into the 2D array has unique memory allocation, it is passed through this function.
 func (x *worldMap) buildMap2(slice [][]int, mapname string, twice int) {
 	world_map := *x
 	switch twice {
@@ -201,6 +210,7 @@ func (x *worldMap) buildMap2(slice [][]int, mapname string, twice int) {
 	*x = world_map
 }
 
+// This function prints out a 2D map by it's 3D array index.
 func (x worldMap) printMap() {
 	fmt.Println("")
 	Scanner := bufio.NewScanner(os.Stdin)
@@ -253,6 +263,7 @@ func (x worldMap) fullMap() {
 	}
 }
 
+//this function lets you create an object and store it in the objectStorage struct.
 func (x *objectStorage) createObject() {
 	fmt.Println("")
 	Scanner := bufio.NewScanner(os.Stdin)
@@ -278,6 +289,7 @@ func (x *objectStorage) createObject() {
 	*x = i
 }
 
+//function to create hero character.
 func (x *objectStorage) createHero() {
 	Scanner := bufio.NewScanner(os.Stdin)
 	fmt.Println("===GAME BUILDER===")
@@ -307,6 +319,7 @@ func (x *objectStorage) createHero() {
 	*x = i
 }
 
+//this function lets you search for an object by its index and print it out.
 func (x objectStorage) printObject() {
 	fmt.Println("")
 	Input := bufio.NewScanner(os.Stdin)
@@ -323,6 +336,7 @@ func (x objectStorage) printObject() {
 	}
 }
 
+//this function lets you place an object on the map, by 3D array index. Once you select a map, it will ask for X/Y coordinates.
 func (w *worldMap) placeObject(y objectStorage) {
 	fmt.Println("")
 	world_map := *w
@@ -371,6 +385,7 @@ func (w *worldMap) placeObject(y objectStorage) {
 	*w = world_map
 }
 
+//this function lets user move the hero around using w/s/a/d when they decide to play the game they have built.
 func (w *worldMap) moveHero(cmd string, o *objectStorage) {
 	world_map := *w
 	for i := range world_map.Zone {
@@ -456,6 +471,7 @@ func (w *worldMap) moveHero(cmd string, o *objectStorage) {
 	}
 }
 
+//This is the entry point of the gamebuilder. the Main function is the entry point of any golang function.
 func main() {
 	//initial things necessary for game to work
 	object := objectStorage{}
