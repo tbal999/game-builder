@@ -41,13 +41,13 @@ func saveGame(w worldMap, o objectStorage) {
 		fmt.Println(err)
 		return
 	}
-	_ = ioutil.WriteFile(savefile+".json", output, 0755)
+	_ = ioutil.WriteFile("maps"+savefile+".json", output, 0755)
 	output2, err := json.Marshal(convertobject)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-	_ = ioutil.WriteFile(savefile+"2"+".json", output2, 0755)
+	_ = ioutil.WriteFile("objects"+savefile+".json", output2, 0755)
 	fmt.Println("Saved " + savefile + "!")
 }
 
@@ -58,11 +58,11 @@ func loadGame(w *worldMap, o *objectStorage) {
 	Scanner.Scan()
 	savefile := Scanner.Text()
 	worldmap := *w
-	jsonFile, _ := ioutil.ReadFile(savefile + ".json")
+	jsonFile, _ := ioutil.ReadFile("maps" + savefile + ".json")
 	_ = json.Unmarshal([]byte(jsonFile), &worldmap)
 	*w = worldmap
 	objectstorage := *o
-	jsonFile2, _ := ioutil.ReadFile(savefile + "2" + ".json")
+	jsonFile2, _ := ioutil.ReadFile("objects" + savefile + ".json")
 	_ = json.Unmarshal([]byte(jsonFile2), &objectstorage)
 	*o = objectstorage
 	fmt.Println("Loaded " + savefile + "!")
