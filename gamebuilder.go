@@ -19,7 +19,7 @@ type objectStorage struct {
 	ObjectAttack      []int    `json:"objectStorageObjectAttack"`
 }
 
-// This is how all maps are in the gamebuilder are stored. Maps have a description, an X axis and a Y axis. The 2D maps are stored in a 3D array.
+// This is how all maps are in the gamebuilder are stored. Maps have a description, an X axis and a Y axis. It's a 3D slice.
 // The maps are accessed by 3D array index.
 type worldMap struct {
 	Description []string  `json:"worldMapDescription"`
