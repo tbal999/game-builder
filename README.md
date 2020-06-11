@@ -1,5 +1,6 @@
 # game-builder
-A simple console app for building dungeon crawler games.
+The idea behind this is to give table-top game dungeon masters a way to create an expansive 2D landscape you can explore and interact with objects/things along the way.
+
 NEED TO REFACTOR THIS INTO MULTIPLE GO FILES - also, not completed yet.
 
 This programme involved: string interpolation, data structure (slices/arrays) manipulation, JSON exporting/importing, Structs/Classes, User input handling, switches, for loops, while loops, exception handling, if / else statements and game logic.
