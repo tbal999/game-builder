@@ -3,7 +3,7 @@ The idea behind this is to give table-top game dungeon masters a way to create a
 
 NEED TO REFACTOR THIS INTO MULTIPLE GO FILES - also, not completed yet.
 
-This programme involved: string interpolation, data structure (slices/arrays) manipulation, JSON exporting/importing, Structs/Classes, User input handling, switches, for loops, while loops, exception handling, if / else statements and game logic.
+This programme involved: string interpolation, data structure (slices/arrays) manipulation, JSON exporting/importing, Structs/Classes, User input handling, switches, for loops, exception handling, if / else statements and game logic.
 
 <b>Commands: all commands are listed below.</b><br/>
 buildobject: create an object.<br/>
